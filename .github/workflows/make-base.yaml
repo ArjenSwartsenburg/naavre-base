@@ -15,71 +15,38 @@ on:
         description: 'Docker image version for release'
         type: string
         required: true
-      build_jupyter:
-        description: 'Whether to build the NaaVRE Jupyter images'
-        type: boolean
-        required: true
-      build_cell_base:
-        description: 'Whether to build the NaaVRE cell base images'
-        type: boolean
-        required: true
-      free_disk_space:
-        description: 'Free disk space on the action runner before running jobs'
-        type: boolean
-        required: true
 
 jobs:
-  configure-workflow:
-    name: Configure workflow
-    runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
-    steps:
-      - id: skip_check
-        name: Configure skip-duplicate-actions
-        uses: fkirc/skip-duplicate-actions@v5
-        with:
-          paths: '[".github/**", "docker/**"]'
-          do_not_skip: '["workflow_dispatch", "schedule", "release"]'
 
   build-cell-build:
     uses: ./.github/workflows/build-image.yaml
-    needs: [configure-workflow]
-    if: ${{ needs.configure-workflow.outputs.should_skip != 'true' && inputs.build_cell_base }}
     with:
-      dockerfile: cell-build.Dockerfile
+      dockerfile: ./docker/cell-build.Dockerfile
       image_name: naavre-base-cell-build
       image_repo: ${{ inputs.image_repo }}
       image_version: ${{ inputs.ci_image_version }}
 
   build-cell-runtime:
     uses: ./.github/workflows/build-image.yaml
-    needs: [configure-workflow]
-    if: ${{ needs.configure-workflow.outputs.should_skip != 'true' && inputs.build_cell_base }}
     with:
-      dockerfile: cell-runtime.Dockerfile
+      dockerfile: ./docker/cell-runtime.Dockerfile
       image_name: naavre-base-cell-runtime
       image_repo: ${{ inputs.image_repo }}
       image_version: ${{ inputs.ci_image_version }}
 
   build-jupyter:
     uses: ./.github/workflows/build-image.yaml
-    needs: [configure-workflow]
-    if: ${{ needs.configure-workflow.outputs.should_skip != 'true' && inputs.build_jupyter }}
     with:
-      dockerfile: jupyter.Dockerfile
+      dockerfile: ./docker/jupyter.Dockerfile
       image_name: naavre-base-jupyter
       image_repo: ${{ inputs.image_repo }}
       image_version: ${{ inputs.ci_image_version }}
-      free_disk_space: ${{ inputs.free_disk_space }}
 
   push-cell-build:
     uses: ./.github/workflows/push-image.yaml
     if: |
       always() &&
-      needs.configure-workflow.outputs.should_skip != 'true' &&
-      github.event_name == 'release' &&
-      inputs.build_cell_base
+      github.event_name == 'release'
     with:
       image_name: naavre-base-cell-build
       image_repo: ${{ inputs.image_repo }}
@@ -90,9 +57,7 @@ jobs:
     uses: ./.github/workflows/push-image.yaml
     if: |
       always() &&
-      needs.configure-workflow.outputs.should_skip != 'true' &&
-      github.event_name == 'release' &&
-      inputs.build_cell_base
+      github.event_name == 'release'
     with:
       image_name: naavre-base-cell-runtime
       image_repo: ${{ inputs.image_repo }}
@@ -103,12 +68,9 @@ jobs:
     uses: ./.github/workflows/push-image.yaml
     if: |
       always() &&
-      needs.configure-workflow.outputs.should_skip != 'true' &&
-      github.event_name == 'release' &&
-      inputs.build_jupyter
+      github.event_name == 'release'
     with:
       image_name: naavre-base-jupyter
       image_repo: ${{ inputs.image_repo }}
       ci_image_version: ${{ inputs.ci_image_version }}
       rel_image_version: ${{ inputs.rel_image_version }}
-      free_disk_space: ${{ inputs.free_disk_space }}
