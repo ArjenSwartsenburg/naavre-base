@@ -7,10 +7,6 @@ on:
         description: 'Docker file'
         type: string
         required: true
-      flavor_dir:
-        description: 'Flavor directory'
-        type: string
-        required: true
       image_name:
         description: 'Docker image name'
         type: string
@@ -59,22 +55,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - id: find-dockerfile
-        name: Find Dockerfile
-        run: |
-          # Choose the {inputs.flavor_dir}/{inputs.dockerfile} if it exists,
-          # otherwise fall-back to docker/{inputs.dockerfile}
-          dockerfile="${{ inputs.flavor_dir }}/${{ inputs.dockerfile }}"
-          [ -f "$dockerfile" ] || dockerfile="./docker/${{ inputs.dockerfile }}"
-          echo "dockerfile=$dockerfile" | tee -a $GITHUB_OUTPUT
-
       - name: Build docker
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ${{ steps.find-dockerfile.outputs.dockerfile }}
-          build-args: |
-            CONDA_ENV_FILE=${{ inputs.flavor_dir }}/environment.yaml
+          file: ${{ inputs.dockerfile }}
           tags: ${{ inputs.image_repo }}/${{ inputs.image_name }}:${{ inputs.image_version }}
           push: true
           cache-from: type=gha

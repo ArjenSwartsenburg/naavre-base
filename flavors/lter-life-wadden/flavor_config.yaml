@@ -1,5 +1,0 @@
-flavor_name: lter-life-wadden
-build_jupyter: True
-build_cell_base: True
-free_disk_space: True
-aliases: []

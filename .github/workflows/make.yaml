@@ -27,20 +27,14 @@ jobs:
           paths_ignore: '["**/README.md"]'
           do_not_skip: '["workflow_dispatch", "schedule", "release"]'
       - uses: actions/checkout@v4
-      - id: list-flavors
-        name: List flavors
-        run: |
-          matrix=$(find ./flavors -mindepth 2 -maxdepth 2 -name 'flavor_config.yaml' | xargs yq ea -o=j -I=0 '[.]')
-          echo "matrix={\"include\":$(echo $matrix)}" | tee -a $GITHUB_OUTPUT
 
-  flavors:
-    name: Flavor ${{ matrix.flavor_name }}
-    uses: ./.github/workflows/make-flavor.yaml
+  base:
+    name: Make base images
+    uses: ./.github/workflows/make-base.yaml
     needs: [configure-workflow]
     if: needs.configure-workflow.outputs.should_skip != 'true'
     with:
-      flavor_name: ${{ matrix.flavor_name }}
-      image_repo: 'ghcr.io/naavre/flavors'
+      image_repo: 'ghcr.io/arjenswartsenburg/naavre-base'
       ci_image_version: ci-${{ github.sha }}
       rel_image_version: ${{ github.ref_name }}
       build_jupyter: ${{ matrix.build_jupyter }}
@@ -53,7 +47,7 @@ jobs:
   save-base-image-tags:
     name: Save base image tags
     runs-on: ubuntu-latest
-    needs: [flavors]
+    needs: [base]
     if: ${{ github.event_name == 'release' }}
     permissions:
       contents: write
@@ -67,8 +61,8 @@ jobs:
                 [$flavor.flavor_name] + ($flavor.aliases // []) | filter($flavor.build_cell_base) | map({
                   "key": .,
                   "value": {
-                    "build": "ghcr.io/naavre/flavors/naavre-fl-\($flavor.flavor_name)-cell-build:${{ github.ref_name }}",
-                    "runtime": "ghcr.io/naavre/flavors/naavre-fl-\($flavor.flavor_name)-cell-runtime:${{ github.ref_name }}"
+                    "build": "ghcr.io/arjenswartsenburg/naavre-base/base-cell-build:${{ github.ref_name }}",
+                    "runtime": "ghcr.io/arjenswartsenburg/naavre-base/base-cell-runtime:${{ github.ref_name }}"
                   }
                 })
               )] | .[] as $item ireduce([]; . + $item) | from_entries

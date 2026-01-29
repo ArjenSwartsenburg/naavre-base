@@ -1,8 +1,0 @@
-library(vol2birdR)
-library(bioRad)
-library(getRad)
-library(keyring)
-library(glue)
-library(httr)
-library(xml2)
-library(aws.s3)

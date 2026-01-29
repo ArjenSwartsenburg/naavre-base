@@ -1,12 +1,8 @@
-name: Make flavor
+name: Make Base
 
 on:
   workflow_call:
     inputs:
-      flavor_name:
-        description: 'NaaVRE flavor name'
-        type: string
-        required: true
       image_repo:
         description: 'Docker image repo'
         type: string
@@ -43,7 +39,7 @@ jobs:
         name: Configure skip-duplicate-actions
         uses: fkirc/skip-duplicate-actions@v5
         with:
-          paths: '[".github/**", "docker/**", "flavors/${{ inputs.flavor_name }}/**"]'
+          paths: '[".github/**", "docker/**"]'
           do_not_skip: '["workflow_dispatch", "schedule", "release"]'
 
   build-cell-build:
@@ -52,8 +48,7 @@ jobs:
     if: ${{ needs.configure-workflow.outputs.should_skip != 'true' && inputs.build_cell_base }}
     with:
       dockerfile: cell-build.Dockerfile
-      flavor_dir: './flavors/${{ inputs.flavor_name }}'
-      image_name: naavre-fl-${{ inputs.flavor_name }}-cell-build
+      image_name: naavre-base-cell-build
       image_repo: ${{ inputs.image_repo }}
       image_version: ${{ inputs.ci_image_version }}
 
@@ -63,8 +58,7 @@ jobs:
     if: ${{ needs.configure-workflow.outputs.should_skip != 'true' && inputs.build_cell_base }}
     with:
       dockerfile: cell-runtime.Dockerfile
-      flavor_dir: './flavors/${{ inputs.flavor_name }}'
-      image_name: naavre-fl-${{ inputs.flavor_name }}-cell-runtime
+      image_name: naavre-base-cell-runtime
       image_repo: ${{ inputs.image_repo }}
       image_version: ${{ inputs.ci_image_version }}
 
@@ -74,72 +68,46 @@ jobs:
     if: ${{ needs.configure-workflow.outputs.should_skip != 'true' && inputs.build_jupyter }}
     with:
       dockerfile: jupyter.Dockerfile
-      flavor_dir: './flavors/${{ inputs.flavor_name }}'
-      image_name: naavre-fl-${{ inputs.flavor_name }}-jupyter
+      image_name: naavre-base-jupyter
       image_repo: ${{ inputs.image_repo }}
       image_version: ${{ inputs.ci_image_version }}
       free_disk_space: ${{ inputs.free_disk_space }}
 
-  test-jupyter:
-    uses: ./.github/workflows/test-jupyter.yaml
-    needs: [build-jupyter]
-    if: needs.configure-workflow.outputs.should_skip != 'true'
-    with:
-      image_name: naavre-fl-${{ inputs.flavor_name }}-jupyter
-      image_repo: ${{ inputs.image_repo }}
-      image_version: ${{ inputs.ci_image_version }}
-      tests_dir: './flavors/${{ inputs.flavor_name }}/tests/'
-
-  test-naavre-cell:
-    uses: ./.github/workflows/test-naavre-cell.yaml
-    needs: [build-cell-build, build-cell-runtime]
-    if: needs.configure-workflow.outputs.should_skip != 'true'
-    with:
-      image_name_build: naavre-fl-${{ inputs.flavor_name }}-cell-build
-      image_name_runtime: naavre-fl-${{ inputs.flavor_name }}-cell-runtime
-      image_name: naavre-fl-${{ inputs.flavor_name }}-cell-test
-      image_repo: ${{ inputs.image_repo }}
-      image_version: ${{ inputs.ci_image_version }}
-      tests_dir: './flavors/${{ inputs.flavor_name }}/tests/'
-
   push-cell-build:
     uses: ./.github/workflows/push-image.yaml
-    needs: [test-naavre-cell, test-jupyter]
     if: |
       always() &&
       needs.configure-workflow.outputs.should_skip != 'true' &&
       github.event_name == 'release' &&
       inputs.build_cell_base
     with:
-      image_name: naavre-fl-${{ inputs.flavor_name }}-cell-build
+      image_name: naavre-base-cell-build
       image_repo: ${{ inputs.image_repo }}
       ci_image_version: ${{ inputs.ci_image_version }}
       rel_image_version: ${{ inputs.rel_image_version }}
 
   push-cell-runtime:
     uses: ./.github/workflows/push-image.yaml
-    needs: [test-naavre-cell, test-jupyter]
     if: |
       always() &&
       needs.configure-workflow.outputs.should_skip != 'true' &&
       github.event_name == 'release' &&
       inputs.build_cell_base
     with:
-      image_name: naavre-fl-${{ inputs.flavor_name }}-cell-runtime
+      image_name: naavre-base-cell-runtime
       image_repo: ${{ inputs.image_repo }}
       ci_image_version: ${{ inputs.ci_image_version }}
       rel_image_version: ${{ inputs.rel_image_version }}
 
   push-jupyter:
     uses: ./.github/workflows/push-image.yaml
-    needs: [test-naavre-cell, test-jupyter]
     if: |
       always() &&
       needs.configure-workflow.outputs.should_skip != 'true' &&
       github.event_name == 'release' &&
       inputs.build_jupyter
     with:
-      image_name: naavre-fl-${{ inputs.flavor_name }}-jupyter
+      image_name: naavre-base-jupyter
       image_repo: ${{ inputs.image_repo }}
       ci_image_version: ${{ inputs.ci_image_version }}
       rel_image_version: ${{ inputs.rel_image_version }}

@@ -1,4 +1,0 @@
-flavor_name: biotisan-euromarec
-build_jupyter: True
-build_cell_base: True
-free_disk_space: False

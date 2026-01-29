@@ -1,1 +1,0 @@
-# NaaVRE Wildfire Resilience Satellite Imagery Time Series (WiReSITS) flavor
