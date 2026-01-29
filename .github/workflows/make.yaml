@@ -33,6 +33,6 @@ jobs:
     needs: [configure-workflow]
     if: needs.configure-workflow.outputs.should_skip != 'true'
     with:
-      image_repo: 'ghcr.io/arjenswartsenburg/naavre-base'
+      image_repo: 'ghcr.io/arjenswartsenburg'
       ci_image_version: ci-${{ github.sha }}
       rel_image_version: ${{ github.ref_name }}

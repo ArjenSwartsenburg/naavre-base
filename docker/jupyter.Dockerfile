@@ -1,6 +1,6 @@
 FROM quay.io/jupyter/minimal-notebook:lab-4.3.6
 
-COPY --chown=jovyan:jovyan ./jupyter.requirements.txt requirements.txt
+COPY --chown=jovyan:jovyan ./docker/jupyter.requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 # nb_conda_kernels for auto-discovery of kernels in other conda environments
