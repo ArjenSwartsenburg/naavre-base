@@ -31,6 +31,9 @@ jobs:
     name: Make base images
     uses: ./.github/workflows/make-base.yaml
     needs: [configure-workflow]
+    premissions:
+      contents: read
+      packages: write
     if: needs.configure-workflow.outputs.should_skip != 'true'
     with:
       image_repo: 'ghcr.io/arjenswartsenburg'
